@@ -64,3 +64,9 @@ Browser QA was performed against the managed Sites preview. No Windows endpoint,
 ## Review boundary
 
 Review this milestone before starting Milestone 2. Backend APIs, database migrations, endpoint agents, threat-intelligence downloads and operational firewall controls are intentionally not started. This is the boundary required by Mandatory Development Rule 14 in the supplied master prompt.
+
+## Windows launcher follow-up
+
+`start-dashboard.bat` bootstraps Node.js/npm through WinGet when necessary and delegates to `scripts/start-dashboard.mjs`. The helper installs locked dependencies with the exact package-manager version, checks whether reinstall is needed, refuses an occupied port, starts the standard Next.js runtime bound to loopback, and opens the dashboard after a successful HTTP response. Errors stay visible in the batch window.
+
+Launcher behavior has 8 additional tests, alongside the original 11 domain tests. The test script names its files explicitly for Windows compatibility; type checking regenerates Next route declarations to avoid stale generated types after switching runtimes. Native Windows batch execution and WinGet installation cannot be verified in the Linux development environment and are not claimed as tested. See the README for double-click instructions and troubleshooting options.

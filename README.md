@@ -6,6 +6,27 @@ A modular, Windows-first security operations platform built in six reviewable mi
 
 ![Milestone 1 dashboard with simulated data](docs/dashboard-preview.jpg)
 
+## Windows: double-click launcher
+
+Download and extract the **complete repository**, then double-click **`start-dashboard.bat`** in the project root. Keep it beside `package.json` and the `scripts` folder.
+
+The launcher checks for Node.js 22.13+ and npm. If they are unavailable or outdated, it attempts to install Node.js LTS through Windows Package Manager. Windows may ask for installer approval or terms; if WinGet is unavailable, it shows the official Node.js installation link. No PowerShell execution-policy changes are needed.
+
+It then obtains the pinned pnpm version using npm, installs the locked dependencies when needed, starts standard Next.js on **http://127.0.0.1:3000**, and opens the browser once the server responds. Internet access is required for first setup or changed dependencies. Later runs reuse the installed packages. Keep the terminal open; press **Ctrl+C** to stop.
+
+Optional commands from a terminal in the repository folder:
+
+```bat
+start-dashboard.bat --reinstall
+start-dashboard.bat --port=3001
+start-dashboard.bat --no-open
+start-dashboard.bat --setup-only
+```
+
+Use `--reinstall` to repair dependencies and `--port=3001` if port 3000 is already in use. Changed dependency files, Node versions, platforms or architectures trigger setup again. Spaces in the extracted folder path are supported. This launcher starts only the Milestone 1 frontend with simulated data.
+
+The Node helper and setup decisions have automated coverage. Native `.bat` execution, WinGet installation and browser opening still need a Windows smoke test; development here runs on Linux.
+
 ## Run locally
 
 Use Node.js 22.13 or later and pnpm 11.25.0:
