@@ -2,13 +2,15 @@
 
 A modular, Windows-first security operations platform built in six reviewable milestones.
 
-**Current branch: Milestone 2, authenticated backend and connected workspace.** `/` keeps the clearly labelled simulated Milestone 1 frontend. `/live` uses real session authentication, enrollment, telemetry persistence, audit records and an event stream from the configured FastAPI service. Lab-submitted telemetry is explicitly labelled. Windows monitoring, intelligence integrations and firewall enforcement are later milestones.
+**Current branch: Milestone 3, Windows monitoring agent.** `/` retains the labelled simulated frontend; `/live` displays authenticated backend records, agent inventory, collector health, event context and provenance. The .NET 10 agent provides native Windows collectors, protected offline buffering and controlled service installation. Intelligence updates and firewall enforcement remain later milestones.
+
+Build and install the agent using [agent instructions](agent/README.md). Review [Milestone 3 validation and limitations](docs/MILESTONE-3.md) before deployment. Native Windows acceptance is recorded separately from Linux compilation and protocol tests.
 
 ![Milestone 1 dashboard with simulated data](docs/dashboard-preview.jpg)
 
-## Run Milestone 2
+## Run the backend and dashboard
 
-Use branch **`milestone-2-backend-auth-enrollment`**. On Windows, configure a local PostgreSQL database and install Python 3.12, then double-click **`start-platform.bat`**. Complete the first-administrator setup in the backend window and sign in at **http://127.0.0.1:3000/live**. The launchers install the pinned project requirements when needed. They do not create a PostgreSQL service automatically.
+Use branch **`milestone-3-windows-agent`** for the agent-compatible backend. On Windows, configure a local PostgreSQL database and install Python 3.12, then double-click **`start-platform.bat`**. Complete the first-administrator setup in the backend window and sign in at **http://127.0.0.1:3000/live**. The launchers install the pinned project requirements when needed. They do not create a PostgreSQL service automatically.
 
 See [backend setup and API guide](backend/README.md), [Milestone 2 acceptance](docs/MILESTONE-2.md), and the [branch plan](docs/MILESTONE-BRANCHES.md). No default administrator password is supplied. The original `start-dashboard.bat` continues to open the simulated frontend; `start-dashboard.bat --connected` opens the connected workspace when the backend is already running.
 

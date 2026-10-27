@@ -109,3 +109,10 @@ No public backend, production TLS certificate, real agent or production firewall
 Before changing a populated schema, create a PostgreSQL custom-format backup with `pg_dump -Fc -f BACKUP_PATH DATABASE_NAME` using a protected credentials mechanism (password prompt, service file or OS-protected password file). Store backups separately from the host and test `pg_restore` into an isolated database. Never place passwords in command-line URLs or commit backups.
 
 Restore the matching database backup and application revision together after a failed upgrade; take a new backup before any downgrade. `alembic downgrade base` is destructive and is only appropriate for disposable lab databases. Full disaster recovery and restore evidence are Milestone 6 deliverables.
+
+
+## Milestone 3 agent protocol
+
+Apply migration `0002` before using the Windows agent. Enrollment now includes `protocolVersion: 3`. Telemetry accepts optional `sampled_at`, bounded `inventory` and `health` objects, and per-event UUID `event_uid`, allowlisted `signals` and `details`. Responses bind accepted batches through `batchId`. Resource/inventory sample timestamps prevent delayed batches overwriting newer snapshots. Stable event IDs deduplicate cross-batch replay; changed content under the same ID is rejected transactionally with HTTP 409. Limits remain 1 MiB per request, 100 events per batch and 200 rows per inventory list. Agent requests are bounded further to 512 KiB/50 events.
+
+`GET /api/v1/endpoints/{id}` includes full inventory; lists/stream updates include availability, observation timestamps and collector health without inventory rows. Event responses include signals/context and backend-assigned rule/severity. Command-line strings and raw XML are not valid context fields. The agent origin label is reported provenance from an authenticated endpoint, not a hardware attestation. Operator-local hash matches are labelled as such. Software vulnerability matching and intelligence integration remain Milestone 4. See [agent guide](../agent/README.md).

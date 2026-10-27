@@ -1,0 +1,17 @@
+{
+  "server_url": "https://soc.example.invalid",
+  "data_directory": "C:\\ProgramData\\Sentinel\\SentinelAgent\\state",
+  "service_name": "SentinelAgent",
+  "allow_http_loopback_development": false,
+  "interval_seconds": 15,
+  "inventory_interval_seconds": 300,
+  "max_queue_files": 10000,
+  "max_queue_bytes": 134217728,
+  "file_integrity_paths": [],
+  "known_bad_hashes": [],
+  "analyze_command_lines_locally": true,
+  "event_channels": [
+    {"name": "Security", "query": "*[System[(EventID=4624 or EventID=4625 or EventID=4688)]]"},
+    {"name": "System", "query": "*[System[(EventID=7045)]]"}
+  ]
+}

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from uuid import uuid4
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, JSON
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Index, JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 def utcnow(): return datetime.now(timezone.utc)
@@ -49,6 +49,10 @@ class Endpoint(Base):
     disk: Mapped[float] = mapped_column(Float, default=0)
     network_bps: Mapped[int] = mapped_column(Integer, default=0)
     telemetry_origin: Mapped[str] = mapped_column(String(12), default="unreported")
+    resource_observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    inventory_observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    inventory: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    agent_health: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 class TelemetryBatch(Base):
     __tablename__ = "telemetry_batches"
     __table_args__ = (UniqueConstraint("endpoint_id", "batch_id"),)
@@ -59,6 +63,11 @@ class TelemetryBatch(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 class SecurityEvent(Base):
     __tablename__ = "security_events"
+    __table_args__ = (Index("uq_endpoint_external_event", "endpoint_id", "external_id", unique=True),)
+    external_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    external_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    signals: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=identifier)
     endpoint_id: Mapped[str] = mapped_column(ForeignKey("endpoints.id"), index=True)
     batch_id: Mapped[str] = mapped_column(ForeignKey("telemetry_batches.id"))

@@ -188,7 +188,7 @@ def create_app(settings=None):
         audit(db,f"endpoint:{host.id}","endpoint.enrolled",host.id)
         emit(db,"endpoint.changed",endpoint_json(host))
         db.commit()
-        return {"endpointId":host.id,"agentToken":raw,"credentialShownOnce":True,"commandsEnabled":False}
+        return {"endpointId":host.id,"agentToken":raw,"credentialShownOnce":True,"commandsEnabled":False,"protocolVersion":3}
 
     @app.get("/api/v1/endpoints")
     def endpoints(q: str=Query(default="",max_length=100),status: Literal["online","offline","degraded","revoked"]|None=None,offset: int=Query(default=0,ge=0),limit_: int=Query(default=100,ge=1,le=200,alias="limit"),user=Depends(browser_user),db=Depends(get_db)):
@@ -206,7 +206,7 @@ def create_app(settings=None):
     def endpoint(endpoint_id: UUID,user=Depends(browser_user),db=Depends(get_db)):
         host=db.get(Endpoint,str(endpoint_id))
         if not host: raise HTTPException(404,"Endpoint not found")
-        return endpoint_json(host)
+        return endpoint_json(host,include_inventory=True)
 
     @app.post("/api/v1/endpoints/{endpoint_id}/revoke")
     def revoke_endpoint(endpoint_id: UUID,user=Depends(administrator),db=Depends(get_db)):
@@ -224,16 +224,30 @@ def create_app(settings=None):
         previous=db.scalar(select(TelemetryBatch).where(TelemetryBatch.endpoint_id==host.id,TelemetryBatch.batch_id==str(body.batch_id)))
         if previous:
             if not hmac.compare_digest(previous.payload_hash,payload_hash): raise HTTPException(409,"Batch ID was reused with different content")
-            return {"accepted":True,"duplicate":True,"events":0}
+            return {"accepted":True,"duplicate":True,"events":0,"batchId":str(body.batch_id)}
         batch=TelemetryBatch(endpoint_id=host.id,batch_id=str(body.batch_id),payload_hash=payload_hash)
         db.add(batch); db.flush()
         host.last_seen=utcnow()
-        host.cpu,host.ram,host.disk,host.network_bps=body.resources.cpu,body.resources.ram,body.resources.disk,body.resources.network_bps
-        host.telemetry_origin=body.origin
+        sampled=body.sampled_at or utcnow()
+        if host.resource_observed_at is None or sampled>=aware(host.resource_observed_at):
+            host.cpu,host.ram,host.disk,host.network_bps=body.resources.cpu,body.resources.ram,body.resources.disk,body.resources.network_bps
+            host.resource_observed_at=sampled;host.telemetry_origin=body.origin
+            if body.health: host.agent_health=body.health.model_dump(mode="json");host.agent_version=body.health.agent_version
+        if body.inventory and (host.inventory_observed_at is None or sampled>=aware(host.inventory_observed_at)):
+            host.inventory=body.inventory.model_dump(mode="json");host.inventory_observed_at=sampled
         records=[]
         for item in body.events:
-            severity,confidence,rule=normalize(item)
-            event=SecurityEvent(endpoint_id=host.id,batch_id=batch.id,title=item.title,source=item.source,event_type=item.event_type,windows_event_id=item.windows_event_id,occurred_at=item.occurred_at,severity=severity,confidence=confidence,rule=rule,evidence=item.evidence,telemetry_origin=body.origin)
+            event_hash=digest(json.dumps(item.model_dump(mode="json"),sort_keys=True,separators=(",",":")))
+            if item.event_uid:
+                existing=db.scalar(select(SecurityEvent).where(SecurityEvent.endpoint_id==host.id,SecurityEvent.external_id==str(item.event_uid)))
+                if existing:
+                    if existing.external_hash!=event_hash: raise HTTPException(409,"External event ID reused with different content")
+                    continue
+            recent=0
+            if item.event_type=="authentication" and item.windows_event_id==4625:
+                recent=db.scalar(select(func.count()).select_from(SecurityEvent).where(SecurityEvent.endpoint_id==host.id,SecurityEvent.windows_event_id==4625,SecurityEvent.occurred_at>=item.occurred_at-timedelta(minutes=2),SecurityEvent.occurred_at<=item.occurred_at,func.coalesce(SecurityEvent.details["source_address"].as_string(),"")==item.details.get("source_address","")))
+            severity,confidence,rule=normalize(item,recent)
+            event=SecurityEvent(external_id=str(item.event_uid) if item.event_uid else None,external_hash=event_hash if item.event_uid else None,signals=item.signals,details=item.details,endpoint_id=host.id,batch_id=batch.id,title=item.title,source=item.source,event_type=item.event_type,windows_event_id=item.windows_event_id,occurred_at=item.occurred_at,severity=severity,confidence=confidence,rule=rule,evidence=item.evidence,telemetry_origin=body.origin)
             db.add(event); db.flush()
             alert=None
             if severity in {"medium","high","critical"}:
@@ -243,7 +257,7 @@ def create_app(settings=None):
         emit(db,"endpoint.changed",endpoint_json(host))
         for record in records: emit(db,"event.created",record)
         db.commit()
-        return {"accepted":True,"duplicate":False,"events":len(records)}
+        return {"accepted":True,"duplicate":False,"events":len(records),"batchId":str(body.batch_id)}
 
     @app.get("/api/v1/events")
     def events(q: str=Query(default="",max_length=100),severity: str|None=None,endpoint: UUID|None=None,type: str|None=None,source: str|None=None,offset: int=Query(default=0,ge=0),limit_: int=Query(default=100,ge=1,le=200,alias="limit"),user=Depends(browser_user),db=Depends(get_db)):

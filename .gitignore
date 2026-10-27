@@ -54,3 +54,12 @@ backend/.coverage
 # Keep non-secret example configuration files.
 !.env.example
 !backend/.env.example
+
+# .NET build output, endpoint identities and telemetry
+**/bin/
+**/obj/
+**/TestResults/
+agent/artifacts/
+agent/local/
+*.pfx
+*.p12
