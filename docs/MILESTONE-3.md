@@ -16,7 +16,7 @@ Branch: `milestone-3-windows-agent`, based on reviewed Milestone 2. Main and pre
 | Check | Result |
 | --- | --- |
 | .NET service and native-test projects cross-compiled with warnings treated as errors | Pass, zero warnings/errors |
-| Cross-platform agent core tests | 14 pass |
+| Cross-platform agent core tests | 15 pass |
 | Backend with PostgreSQL WASM through psycopg, including HTTP Next proxy/SSE | 22 pass |
 | Existing domain/Windows launcher helper tests | 19 pass |
 | TypeScript and standard Next production build | Pass |

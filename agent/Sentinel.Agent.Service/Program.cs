@@ -39,4 +39,4 @@ try
     await builder.Build().RunAsync();return 0;
 }
 catch(Exception error)when(error is IOException or InvalidDataException or UnauthorizedAccessException or System.Text.Json.JsonException or HttpRequestException or InvalidOperationException or System.Security.Cryptography.CryptographicException)
-{Console.Error.WriteLine($"Agent startup/enrollment failed ({error.GetType().Name}). Check configuration, TLS, permissions and backend state. Secrets and response bodies were not logged.");return 1;}
+{Console.Error.WriteLine($"Agent startup/enrollment failed ({error.GetType().Name}{(error is AgentHttpException http?$", HTTP {http.Status}":"")}). Check configuration, TLS, permissions and backend state. Secrets and response bodies were not logged.");return 1;}

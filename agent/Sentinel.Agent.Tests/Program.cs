@@ -41,6 +41,12 @@ cases.Add(("Enrollment negotiates protocol 3 and binds the server origin",async(
  var identity=await t.Enroll(new(new string('e',43),"LAB","192.0.2.1","Windows fixture","0.3.0"),CancellationToken.None);Check(identity.EndpointId==id&&identity.ServerOrigin=="https://example.invalid");
  h.Body=h.Body.Replace("\"protocolVersion\":3","\"protocolVersion\":2");try{await t.Enroll(new(new string('e',43),"LAB","192.0.2.1","Windows fixture","0.3.0"),CancellationToken.None);throw new Exception("Expected protocol rejection");}catch(InvalidDataException){}
 }));
+Test("Retention expires batches by their oldest event, including freshly wrapped replay",()=>{
+ var now=DateTimeOffset.UtcNow;var p=Payload();var oldEvent=new AgentEvent(Guid.NewGuid(),"Fixture","Fixture","health",now-TimeSpan.FromDays(6)-TimeSpan.FromSeconds(1),"Explicit test fixture");
+ Check(!new Envelope(Guid.NewGuid(),p,[]).IsExpired(now));
+ Check(new Envelope(Guid.NewGuid(),p with{Events=[oldEvent]},[]).IsExpired(now));
+ Check(new Envelope(Guid.NewGuid(),p with{SampledAt=now-TimeSpan.FromDays(7)},[]).IsExpired(now));
+});
 int failed=0;
 foreach(var test in cases){try{await test.Run();Console.WriteLine("PASS "+test.Name);}catch(Exception e){failed++;Console.Error.WriteLine("FAIL "+test.Name+": "+e.GetType().Name);}}
 Directory.Delete(temporary,true);Console.WriteLine($"{cases.Count-failed}/{cases.Count} core tests passed.");return failed==0?0:1;

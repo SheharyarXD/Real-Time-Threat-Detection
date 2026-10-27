@@ -15,6 +15,7 @@ Set-ProtectedDirectory $paths.Root '' $false
 Set-ProtectedDirectory $paths.Install '' $false
 $current=Join-Path $paths.Install 'current';New-Item -ItemType Directory -Path $current | Out-Null
 Copy-Item -Path (Join-Path $package '*') -Destination $current
+Assert-Package $current $PublisherThumbprint -AllowUnsignedDevelopment:$AllowUnsignedDevelopment | Out-Null
 $binary=Join-Path $current 'Sentinel.Agent.exe'
 $command='"'+$binary+'" run --config "'+$paths.Config+'"'
 New-Service -Name $ServiceName -BinaryPathName $command -DisplayName "Sentinel Monitoring ($ServiceName)" -StartupType Automatic | Out-Null

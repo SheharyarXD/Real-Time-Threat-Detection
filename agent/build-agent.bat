@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-where dotnet >nul 2>nul
+dotnet --list-sdks 2>nul | findstr /b /c:"10." >nul
 if errorlevel 1 (
   where winget >nul 2>nul
   if errorlevel 1 (

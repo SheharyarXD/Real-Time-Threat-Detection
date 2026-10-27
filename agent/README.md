@@ -5,7 +5,7 @@ C#/.NET 10 Worker Service, Windows x64. Intended lab targets: Windows Server 201
 ## Development setup
 
 1. Start the migrated backend and connected dashboard using root `start-platform.bat`. PostgreSQL and Python 3.12 are backend prerequisites. For a remote agent, expose the backend through an operator-managed HTTPS reverse proxy with a certificate trusted by Windows. The agent connects to the FastAPI origin, not the dashboard's Next.js port. No certificate validation bypass is supported.
-2. On a Windows build machine, run `agent/build-agent.bat`. It checks for the SDK and attempts WinGet installation when absent. The PowerShell build helper requires SDK major 10. If a different SDK is active, install/select .NET 10 and rerun. Output: `agent/artifacts/win-x64`, including a SHA-256 manifest.
+2. On a Windows build machine, run `agent/build-agent.bat`. It checks for a .NET 10 SDK and attempts WinGet installation when absent. The PowerShell build helper requires SDK major 10. If a different SDK is active, install/select .NET 10 and rerun. Output: `agent/artifacts/win-x64`, including a SHA-256 manifest.
 3. In `/live`, sign in as an administrator and create a single-use enrollment token. It expires after 15 minutes. No password or reusable enrollment secret is shipped.
 4. Open an elevated Windows PowerShell window. Run `agent/install-agent.bat` for the explicit **unsigned development** path. Enter the backend HTTPS origin and paste the token into the protected prompt. Tokens go through redirected stdin, never command-line arguments. The installer creates the service and protected configuration before enrollment. If enrollment fails, the service remains stopped; fix the issue and run `scripts/Enroll-Agent.ps1` with a fresh token if the previous one was consumed.
 5. Open `/live` → Endpoints → endpoint details. Check provenance `agent`, resource sample time, inventory time, queue/drop counters and each collector's status. A successful subscription does not establish that Windows audit policy is enabled.
@@ -15,6 +15,8 @@ For same-host isolated testing only, PowerShell supports an explicit loopback HT
 ```powershell
 .\agent\scripts\Install-Agent.ps1 -ServerUrl 'http://127.0.0.1:8000' -AllowHttpLoopbackDevelopment -AllowUnsignedDevelopment
 ```
+
+If Windows marks downloaded PowerShell scripts as blocked, review the scripts and use `Unblock-File` on the reviewed files before running them; enterprise execution policy still applies.
 
 The service uses a virtual `NT SERVICE\SentinelAgent` identity, Event Log Readers membership, delayed automatic startup and SCM recovery (10/30/60 seconds). SYSTEM and administrators control binaries/configuration; only the service identity additionally modifies the state directory. Identity, bookmarks, baseline, change journal and outbox records use machine-scoped DPAPI plus restricted local ACLs. Local administrators remain trusted. State is bound to one endpoint ID and server configuration; do not copy an identity to another host or change its server origin. Revoke and enroll a fresh installation instead.
 

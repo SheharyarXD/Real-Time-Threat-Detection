@@ -50,6 +50,8 @@ try {
 } finally {
     if ($server -and !$server.HasExited) { Stop-Process -Id $server.Id -Force }
     if (Get-Service $service -ErrorAction SilentlyContinue) { & (Join-Path $PSScriptRoot '..\scripts\Manage-Agent.ps1') -ServiceName $service -Action uninstall }
+    $safeStatus=Join-Path $env:SENTINEL_CI_LAB 'backend.out'
+    if (Test-Path $safeStatus) { Get-Content -LiteralPath $safeStatus | Where-Object { $_ -like 'CI backend:*' -or $_ -like 'CI validation fields:*' } | Write-Host }
     # Isolated runner owns these paths. No state or tokens are uploaded as artifacts.
     if (Test-Path $paths.Root) { Remove-Item -LiteralPath $paths.Root -Recurse -Force }
     if (Test-Path $env:SENTINEL_CI_LAB) { Remove-Item -LiteralPath $env:SENTINEL_CI_LAB -Recurse -Force }

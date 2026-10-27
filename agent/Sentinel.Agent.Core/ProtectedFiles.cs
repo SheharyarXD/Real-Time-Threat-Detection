@@ -39,7 +39,7 @@ public sealed class ProtectedFiles(string root,IDataProtector protector)
 public sealed class DurableBuffer(ProtectedFiles files,string folder,int maxFiles,long maxBytes)
 {
     private readonly object gate=new();
-    public int Count => files.List(folder).Length;
+    public int Count {get{lock(gate)return files.List(folder).Length;}}
     public bool TryAdd<T>(string id,T value)
     {
         lock(gate)
@@ -52,6 +52,6 @@ public sealed class DurableBuffer(ProtectedFiles files,string folder,int maxFile
             files.Write(name,value);return true;
         }
     }
-    public (string Name,T Value)[] Read<T>(int count)=>files.List(folder).Take(count).Select(n=>(n,files.Read<T>(n))).ToArray();
-    public void Remove(string name)=>files.Delete(name);
+    public (string Name,T Value)[] Read<T>(int count){lock(gate)return files.List(folder).Take(count).Select(n=>(n,files.Read<T>(n))).ToArray();}
+    public void Remove(string name){lock(gate)files.Delete(name);}
 }

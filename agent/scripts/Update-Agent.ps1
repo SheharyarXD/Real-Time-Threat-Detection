@@ -6,6 +6,8 @@ $paths=Get-AgentPaths $ServiceName;Assert-OwnService $paths
 $metadata=Get-Content -LiteralPath (Join-Path $paths.Root 'installation.json') -Raw | ConvertFrom-Json
 if ($metadata.publisher -and ($PublisherThumbprint -ne $metadata.publisher -or $AllowUnsignedDevelopment)) { throw 'Publisher changes and signed-to-unsigned downgrades require a separate reviewed installation.' }
 $package=Assert-Package $PackagePath $PublisherThumbprint -AllowUnsignedDevelopment:$AllowUnsignedDevelopment
+$version=(Get-Content -LiteralPath (Join-Path $package 'manifest.json') -Raw | ConvertFrom-Json).version
+if ([Version]$version -lt [Version]$metadata.version) { throw 'Release downgrade rejected.' }
 $current=Join-Path $paths.Install 'current';$previous=Join-Path $paths.Install 'previous';$staged=Join-Path $paths.Install 'staged'
 Assert-LocalTree $paths.Install
 if ((Test-Path $previous) -or (Test-Path $staged)) { throw 'Previous or staged release already exists. Review and archive it before another update.' }
@@ -19,7 +21,7 @@ Move-Item -LiteralPath $current -Destination $previous
 try {
     Move-Item -LiteralPath $staged -Destination $current
     Start-Service $ServiceName;(Get-Service $ServiceName).WaitForStatus('Running',[TimeSpan]::FromSeconds(30))
-    $metadata.publisher=$PublisherThumbprint;$metadata.unsignedDevelopment=[bool]$AllowUnsignedDevelopment
+    $metadata.version=$version;$metadata.publisher=$PublisherThumbprint;$metadata.unsignedDevelopment=[bool]$AllowUnsignedDevelopment
     $metadata | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $paths.Root 'installation.json') -Encoding UTF8
     Write-Host 'Local upgrade started. Verify backend acknowledgment and collector health before archiving previous release.'
 } catch {

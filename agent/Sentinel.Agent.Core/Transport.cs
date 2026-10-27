@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using System.Net.Http.Headers;
 namespace Sentinel.Agent.Core;
+public sealed class AgentHttpException(int status):InvalidOperationException("Agent server rejected the request."){public int Status {get;}=status;}
 public sealed record Delivery(bool Accepted,bool AuthorizationBlocked,bool Permanent,int RetrySeconds);
 public sealed class AgentTransport(HttpClient client,Uri origin)
 {
@@ -10,7 +11,7 @@ public sealed class AgentTransport(HttpClient client,Uri origin)
         using var request=new HttpRequestMessage(HttpMethod.Post,new Uri(origin,"/api/v1/agent/enroll")){Content=new ByteArrayContent(Wire.Encode(payload))};
         request.Content.Headers.ContentType=new MediaTypeHeaderValue("application/json");
         using var response=await client.SendAsync(request,cancellation);
-        if(response.StatusCode!=HttpStatusCode.Created)throw new InvalidOperationException($"Enrollment rejected with HTTP {(int)response.StatusCode}; credential material was not logged.");
+        if(response.StatusCode!=HttpStatusCode.Created)throw new AgentHttpException((int)response.StatusCode);
         var body=Wire.Decode<EnrollmentResponse>(await response.Content.ReadAsByteArrayAsync(cancellation));
         if(body.ProtocolVersion!=3||body.EndpointId==Guid.Empty || body.AgentToken.Length is <32 or >128)throw new InvalidDataException("Invalid enrollment response.");
         return new Identity(body.EndpointId,body.AgentToken,origin.GetLeftPart(UriPartial.Authority));
@@ -26,7 +27,7 @@ public sealed class AgentTransport(HttpClient client,Uri origin)
         {
             using var acknowledgment=JsonDocument.Parse(await response.Content.ReadAsByteArrayAsync(cancellation));
             var root=acknowledgment.RootElement;
-            if(!root.TryGetProperty("accepted",out var accepted)||!accepted.GetBoolean()||!root.TryGetProperty("batchId",out var batch)||batch.GetString()!=envelope.Payload.BatchId.ToString())throw new InvalidDataException("Server acknowledgment was not bound to the submitted batch.");
+            if(root.ValueKind!=JsonValueKind.Object||!root.TryGetProperty("accepted",out var accepted)||accepted.ValueKind!=JsonValueKind.True||!root.TryGetProperty("batchId",out var batch)||batch.ValueKind!=JsonValueKind.String||batch.GetString()!=envelope.Payload.BatchId.ToString())throw new InvalidDataException("Server acknowledgment was not bound to the submitted batch.");
             return new(true,false,false,0);
         }
         int retry=0;

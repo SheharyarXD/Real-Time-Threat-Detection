@@ -20,7 +20,10 @@ public sealed record Inventory(ProcessEntry[] Processes, ServiceEntry[] Services
 public sealed record AgentHealth(CollectorHealth[] Collectors, int QueuePending, long DroppedRecords, string AgentVersion);
 public sealed record Telemetry(Guid BatchId, string Origin, DateTimeOffset SampledAt, Resources Resources, AgentEvent[] Events, Inventory? Inventory, AgentHealth Health);
 public sealed record Identity(Guid EndpointId, string AgentToken,string ServerOrigin="");
-public sealed record Envelope(Guid EndpointId, Telemetry Payload, string[] JournalNames);
+public sealed record Envelope(Guid EndpointId, Telemetry Payload, string[] JournalNames)
+{
+    public bool IsExpired(DateTimeOffset now)=>Payload.SampledAt<now-TimeSpan.FromDays(6)||Payload.Events.Any(e=>e.OccurredAt<now-TimeSpan.FromDays(6));
+}
 public sealed record EnrollmentRequest(string Token,string Hostname,string Ip,string Os,string AgentVersion);
 public sealed record EnrollmentResponse([property: JsonPropertyName("endpointId")]Guid EndpointId,[property: JsonPropertyName("agentToken")]string AgentToken,[property: JsonPropertyName("protocolVersion")]int ProtocolVersion=0);
 

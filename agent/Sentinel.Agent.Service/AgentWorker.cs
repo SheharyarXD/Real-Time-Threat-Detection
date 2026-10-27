@@ -23,8 +23,8 @@ public sealed class AgentWorker(AgentOptions options,ProtectedFiles files,AgentT
                 {
                     foreach(var queued in outbox.Read<Envelope>(8))
                     {
-                        if(DateTimeOffset.UtcNow-queued.Value.Payload.SampledAt>TimeSpan.FromDays(6))
-                        {dropped+=queued.Value.Payload.Events.Length;outbox.Remove(queued.Name);log.LogWarning("Expired buffered batch removed under the six-day policy; batch={BatchId}",queued.Value.Payload.BatchId);continue;}
+                        if(queued.Value.IsExpired(DateTimeOffset.UtcNow))
+                        {dropped+=queued.Value.Payload.Events.Length+1;outbox.Remove(queued.Name);log.LogWarning("Expired buffered batch removed under the six-day policy; batch={BatchId}",queued.Value.Payload.BatchId);continue;}
                         var result=await transport.Send(identity,queued.Value,stoppingToken);
                         if(result.Accepted)
                         {
