@@ -75,7 +75,7 @@ test('Windows invokes npm.cmd safely with the exact pinned pnpm version', () => 
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 test('launcher supports reinstall and setup-only options and validates ports', () => {
-  assert.deepEqual(parseOptions(['--reinstall','--no-open','--setup-only','--port=3001']), { reinstall: true, open: false, setupOnly: true, check: false, port: 3001 });
+  assert.deepEqual(parseOptions(['--reinstall','--no-open','--setup-only','--port=3001']), { reinstall: true, open: false, setupOnly: true, check: false, connected: false, port: 3001 });
   for (const args of [['--port=0'],['--port=65536'],['--port=abc'],['--unexpected']]) assert.throws(() => parseOptions(args));
 });
 test('occupied local ports are detected without stopping another service', async () => {

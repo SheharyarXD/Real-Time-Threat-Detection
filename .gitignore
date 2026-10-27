@@ -43,3 +43,14 @@ yarn-error.log*
 
 # OS metadata
 .DS_Store
+
+# Python backend and local database state
+**/.venv/
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+*.sqlite*
+backend/.coverage
+# Keep non-secret example configuration files.
+!.env.example
+!backend/.env.example

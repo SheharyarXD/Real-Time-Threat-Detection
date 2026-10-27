@@ -1,0 +1,1 @@
+"""Sentinel authenticated telemetry backend."""

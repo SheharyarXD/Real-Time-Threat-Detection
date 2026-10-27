@@ -58,3 +58,11 @@ Use TLS, secure HttpOnly session cookies or another reviewed session mechanism, 
 ## Prototype caveats
 
 The 24-hour, last-hour and 7-day choices are fixture views. Last-hour event filtering uses the fixture reference 14:32 UTC; all listed events are from the same day, so 24-hour and 7-day tables overlap. Trend buckets illustrate aggregate history independently of the 12 detailed recent-event fixtures. CPU/RAM charts are illustrative sample series, not collected observations. CSV exports contain only filtered fixture events, are labelled simulated and neutralize spreadsheet formula prefixes.
+
+## Milestone 2 implementation
+
+The original table above is the roadmap. M2 implements session/login/logout, users/deactivation, single-use enrollments/revocation, endpoint registration/revocation, inventory, normalized event ingestion/filtering/investigation status, persisted proposals, audit verification and authenticated SSE. `lib/backend-api.ts` defines connected response types; demo types/fixtures remain isolated.
+
+Stream variants include `endpoint.changed`, `event.created`, `event.changed` and `mitigation.changed`. Records use full UTC ISO timestamps and UUIDs. Pagination uses `offset`/`limit` with a next-offset cursor. The fixed Next proxy deliberately excludes raw agent enrollment/ingestion routes.
+
+Operational command approval/execution, intelligence updates, connected-record exports and editable detection policies remain future work. Their planned routes must not be confused with the working M2 API. See `backend/README.md` and `backend/app/main.py` for the current surface.

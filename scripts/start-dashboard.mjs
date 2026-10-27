@@ -71,11 +71,12 @@ export function ensureDependencies(directory, { force = false, runtime = process
 }
 
 export function parseOptions(args) {
-  const options = { reinstall: false, open: true, setupOnly: false, check: false, port: 3000 };
+  const options = { reinstall: false, open: true, setupOnly: false, check: false, connected: false, port: 3000 };
   for (const argument of args) {
     if (argument === '--reinstall') options.reinstall = true;
     else if (argument === '--no-open') options.open = false;
     else if (argument === '--setup-only') options.setupOnly = true;
+    else if (argument === '--connected') options.connected = true;
     else if (argument === '--check') options.check = true;
     else if (/^--port=\d+$/.test(argument)) options.port = Number(argument.slice(7));
     else throw new Error(`Unknown option: ${argument}. Use --reinstall, --no-open, --setup-only, --check, or --port=3001.`);
@@ -123,7 +124,8 @@ export async function main(args = process.argv.slice(2)) {
   if (!nodeSupported(process.versions.node)) throw new Error('Node.js 22.13 or later is required. Install Node.js LTS from https://nodejs.org/.');
   const options = parseOptions(args);
   if (!existsSync(path.join(root, 'pnpm-lock.yaml'))) throw new Error('The project lockfile is missing. Download/extract the complete repository before running this launcher.');
-  const url = `http://127.0.0.1:${options.port}`;
+  const url = `http://127.0.0.1:${options.port}${options.connected?'/live':''}`;
+  if(options.connected&&!process.env.SENTINEL_API_URL)process.env.SENTINEL_API_URL='http://127.0.0.1:8000';
   if (options.check) {
     console.log(JSON.stringify({ node: process.versions.node, platform: process.platform, root, pnpm: pnpmVersion(root), installNeeded: dependenciesNeeded(root), install: installCommand(root), url, runtime: 'standard Next.js' }, null, 2));
     return 0;
@@ -135,7 +137,7 @@ export async function main(args = process.argv.slice(2)) {
   ensureDependencies(root, { force: options.reinstall });
   if (options.setupOnly) return 0;
   console.log(`\n[START] Sentinel dashboard: ${url}`);
-  console.log('[INFO] This is the Milestone 1 frontend with simulated data.');
+  console.log(options.connected?'[INFO] Connected workspace: start the backend and use your operator-created account.':'[INFO] This is the Milestone 1 frontend with simulated data.');
   console.log('[INFO] Keep this window open. Press Ctrl+C to stop the dashboard.\n');
   const child = spawn(process.execPath, [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'dev', '--hostname', '127.0.0.1', '--port', String(options.port)], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' } });
   const controller = new AbortController();
