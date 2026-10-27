@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import {useQueryClient} from '@tanstack/react-query';
-import { Activity, ArrowLeft, FileSearch, Globe2, LockKeyhole, LogOut, RefreshCw, Server, Shield, ShieldAlert, ShieldCheck, Users, Wifi } from 'lucide-react';
+import { Activity, ArrowLeft, FileSearch, Globe2, LockKeyhole, LogOut, RefreshCw, Server, Shield, ShieldAlert, ShieldCheck, Users } from 'lucide-react';
 import { Badge, Button, DataTable, Drawer, Meter, Modal, Panel, SearchBox, Select, StateView } from './ui';
 import { backend, ApiError, type LiveSession, type LiveEndpoint, type LiveEvent, type LiveAudit, type LiveMitigation } from '@/lib/backend-api';
 const sections=[['overview','Overview',Activity],['endpoints','Endpoints',Server],['events','Security events',ShieldAlert],['mitigations','Mitigation proposals',ShieldCheck],['intelligence','Intelligence',Globe2],['audit','Audit trail',FileSearch],['users','Users & enrollment',Users]] as const;

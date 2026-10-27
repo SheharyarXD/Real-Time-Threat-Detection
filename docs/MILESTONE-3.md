@@ -20,13 +20,15 @@ Branch: `milestone-3-windows-agent`, based on reviewed Milestone 2. Main and pre
 | Backend with PostgreSQL WASM through psycopg, including HTTP Next proxy/SSE | 22 pass |
 | Existing domain/Windows launcher helper tests | 19 pass |
 | TypeScript and standard Next production build | Pass |
-| Actual Windows service/collectors/install/offline replay | Pending Windows CI |
+| Native Windows collector checks | 10 pass on Windows CI |
+| Native PostgreSQL backend CI | 21 pass, optional Next proxy test skipped |
+| Actual Windows service/install/offline replay | Pending configuration compatibility rerun |
 | Code-signing certificate, signed distribution/installer | Not available; optional signing path unverified |
 
 PostgreSQL validation here uses PGlite's PostgreSQL engine and wire protocol, not native PostgreSQL performance testing. The Windows workflow additionally targets a native PostgreSQL service for backend checks. SQLite is used only for isolated Windows integration tests. A FastAPI test-client dependency deprecation warning remains; it does not affect test results.
 
 ## Acceptance limits
 
-The source and Windows checks are implemented; native Windows behavior must be accepted only after the Windows CI job passes. No native Windows execution occurred inside the Linux workspace. Production TLS/proxy deployment, organizational audit policy, enterprise permissions, resource overhead, long-running retention and a signed MSI/distribution have not been certified. Inventory is bounded; signature checks are sampled and cached. The first integrity sample establishes a baseline. Software metadata prepares Milestone 4 vulnerability matching; no CVE or threat-feed status is invented.
+The source and Windows checks are implemented; native Windows behavior must be accepted only after the Windows CI job passes. Native collector execution passed on a Windows GitHub runner; the service integration rerun remains pending. Production TLS/proxy deployment, organizational audit policy, enterprise permissions, resource overhead, long-running retention and a signed MSI/distribution have not been certified. Inventory is bounded; signature checks are sampled and cached. The first integrity sample establishes a baseline. Software metadata prepares Milestone 4 vulnerability matching; no CVE or threat-feed status is invented.
 
 See [agent operation and recovery](../agent/README.md) for exact collection caps, data fields, installation, retry behavior, publisher pinning and upgrade limitations. Review this milestone before continuing to threat intelligence.

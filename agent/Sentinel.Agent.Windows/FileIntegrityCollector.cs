@@ -23,7 +23,7 @@ public sealed class FileIntegrityCollector(AgentOptions options,ProtectedFiles f
             }
             else {current[root]="missing";if(baseline.TryGetValue(root,out var before)&&before!="missing")events.Add(Change(root,before,"missing"));}
         }
-        foreach(var key in baseline.Keys.Where(k=>!current.ContainsKey(k)&&!k.StartsWith("registry:",StringComparison.Ordinal)&&!k.StartsWith("indicator:",StringComparison.Ordinal)))
+        foreach(var key in baseline.Keys.Where(k=>configured.Any(root=>string.Equals(k,root,StringComparison.OrdinalIgnoreCase)||string.Equals(Path.GetDirectoryName(k),root,StringComparison.OrdinalIgnoreCase))&&!current.ContainsKey(k)&&!k.StartsWith("registry:",StringComparison.Ordinal)&&!k.StartsWith("indicator:",StringComparison.Ordinal)))
             events.Add(Change(key,baseline[key],"missing"));
         foreach(var view in new[]{RegistryView.Registry64,RegistryView.Registry32})
         {

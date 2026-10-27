@@ -14,7 +14,7 @@ try
     for(int i=verb=="run"&&args.Length>0&&args[0].StartsWith("--",StringComparison.Ordinal)?0:1;i<args.Length;i++)
     {if(args[i]=="--config"&&i+1<args.Length)path=Path.GetFullPath(args[++i]);else throw new InvalidDataException("Only --config PATH is accepted; secrets must not be passed as arguments.");}
     if(verb is not("run" or "enroll" or "validate-config"))throw new InvalidDataException("Supported local modes: run, enroll, validate-config.");
-    var options=Wire.Decode<AgentOptions>(File.ReadAllBytes(path));options.Validate();
+    var options=System.Text.Json.JsonSerializer.Deserialize<AgentOptions>(File.ReadAllText(path),Wire.Json)??throw new InvalidDataException("Configuration is empty.");options.Validate();
     if(verb=="validate-config"){Console.WriteLine("Configuration valid. No credentials were read or remote actions enabled.");return 0;}
     SecureDirectory.ValidateConfig(path,options.ServiceName);
     SecureDirectory.Validate(options.DataDirectory,options.ServiceName);
@@ -39,4 +39,4 @@ try
     await builder.Build().RunAsync();return 0;
 }
 catch(Exception error)when(error is IOException or InvalidDataException or UnauthorizedAccessException or System.Text.Json.JsonException or HttpRequestException or InvalidOperationException or System.Security.Cryptography.CryptographicException)
-{Console.Error.WriteLine("Agent startup/enrollment failed. Check configuration, TLS, permissions and backend state. Secrets and response bodies were not logged.");return 1;}
+{Console.Error.WriteLine($"Agent startup/enrollment failed ({error.GetType().Name}). Check configuration, TLS, permissions and backend state. Secrets and response bodies were not logged.");return 1;}

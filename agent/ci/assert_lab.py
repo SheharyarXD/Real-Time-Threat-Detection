@@ -17,7 +17,7 @@ for _ in range(60):
             print('PASS actual Windows service enrolled and reported native inventory/resources/health');break
         if mode=='events':
             event=db.scalar(select(SecurityEvent).where(SecurityEvent.windows_event_id==4242))
-            change=db.scalar(select(SecurityEvent).where(SecurityEvent.source=='File integrity'))
+            change=db.scalar(select(SecurityEvent).where(SecurityEvent.source=='File integrity',SecurityEvent.details['file_path'].as_string()==str(Path(os.environ['SENTINEL_CI_LAB'])/'selected.txt')))
             if event and change:
                 assert event.telemetry_origin=='agent' and event.external_id and change.external_id
                 print('PASS actual EventLog subscription and selected-file change reached the backend');break
